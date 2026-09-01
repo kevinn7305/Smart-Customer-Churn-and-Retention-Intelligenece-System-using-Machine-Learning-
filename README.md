@@ -414,8 +414,6 @@ Potential future improvements include:
 
 **Kevinn Infan Benedick B**
 
-MSc Business Analytics  
-Manipal School of Commerce and Economics
 
 ---
 
