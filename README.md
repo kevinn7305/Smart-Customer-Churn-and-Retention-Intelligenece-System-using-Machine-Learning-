@@ -1,426 +1,124 @@
 # Smart Customer Churn & Retention Intelligence System
 
-## Project Overview
+An end-to-end machine learning project that predicts which customers are likely to churn, ranks them by revenue at risk, and recommends a retention action for each one.
 
-Customer churn is a major challenge for subscription-based and service-oriented businesses. Losing existing customers can negatively affect revenue, profitability, and long-term customer relationships.
+> **Data disclosure:** this project uses a **simulated** 12,000-customer telecom-style dataset, not real customer records. Churn outcomes are sampled from a probability model with built-in relationships. The scores below demonstrate the workflow and must **not** be read as performance on real customers.
 
-This project develops a **Machine Learning-based Customer Churn and Retention Intelligence System** that goes beyond traditional churn prediction.
+## Why this project
 
-Instead of only predicting whether a customer is likely to churn, the project also:
+Keeping a customer is usually cheaper than winning a new one, but a retention team has limited time. This project answers three questions:
 
-- Predicts customer churn probability
-- Categorizes customers based on churn risk
-- Identifies financially valuable customers at risk
-- Creates a customer priority score
-- Estimates customer value at risk
-- Recommends targeted retention actions
+1. **Who** is likely to leave?
+2. **How much** revenue is at stake?
+3. **What** should the team do for each customer?
 
-The objective is to transform machine learning predictions into actionable business insights that can support customer retention decisions.
+## What it does
 
----
+- Generates a reproducible 12,000-customer dataset (fixed random seed 42) with 11 input features.
+- Runs data-quality checks and exploratory analysis.
+- Splits the data 70 / 15 / 15 into train, validation and test sets, stratified by churn.
+- Compares three models: Logistic Regression, Random Forest and CatBoost.
+- Selects the model on validation PR-AUC and the decision threshold on validation data only.
+- Evaluates once on an untouched test set.
+- Scores every customer, assigns a risk band and a recommended action, and exports a CSV for Power BI.
 
-# Business Problem
+## Results
 
-Businesses often have limited resources for customer retention campaigns. Contacting every customer with the same retention strategy can be inefficient and expensive.
+**Model comparison (validation set)**
 
-Therefore, the key business questions addressed in this project are:
+| Model | Accuracy (0.50) | ROC-AUC | PR-AUC |
+|---|---|---|---|
+| **CatBoost (selected)** | 0.8311 | 0.8685 | 0.6731 |
+| Logistic Regression | 0.8311 | 0.8655 | 0.6679 |
+| Random Forest | 0.8106 | 0.8545 | 0.6408 |
 
-1. Which customers are most likely to churn?
-2. Which model performs better for predicting churn?
-3. Which customers should be prioritized for retention?
-4. Which financially valuable customers are at risk?
-5. What retention action can be recommended?
-6. How much customer value is potentially at risk?
+**Final test set (1,800 unseen customers, threshold 0.355)**
 
----
+| Accuracy | Precision | Recall | F1 | ROC-AUC | PR-AUC |
+|---|---|---|---|---|---|
+| 81.22% | 59.46% | 62.56% | 60.97% | 0.8554 | 0.6838 |
 
-# Project Objectives
+Confusion matrix: 1,198 true negatives, 180 false positives, 158 false negatives, 264 true positives. The test churn rate is 23.44%, so the no-skill PR-AUC baseline is 0.234.
 
-The main objectives of this project are to:
+The threshold was set on validation data as the highest accuracy with at least 65% recall. Test recall landed slightly lower at 62.6%, which is reported as it came out.
 
-- Develop machine learning models to predict customer churn
-- Compare Logistic Regression and Random Forest models
-- Evaluate models using multiple performance metrics
-- Select the most suitable model based on ROC-AUC
-- Generate churn probabilities for individual customers
-- Segment customers into risk categories
-- Develop a customer priority score
-- Estimate potential customer value at risk
-- Recommend business retention actions
-- Prepare the final dataset for business intelligence and dashboard development
+**Top churn drivers (CatBoost feature importance)**
 
----
+| Rank | Feature | Importance |
+|---|---|---|
+| 1 | Customer satisfaction | 24.7 |
+| 2 | Support tickets | 14.9 |
+| 3 | Contract type | 11.0 |
+| 4 | Late payments | 9.8 |
+| 5 | Tenure (months) | 8.9 |
 
-# Dataset
+Month-to-month customers churn at 28.7%, against 20.1% on one-year and 12.8% on two-year contracts.
 
-A synthetic customer dataset containing **1,000 customer records** was created for this project.
+**Risk bands and actions (all 12,000 customers)**
 
-The dataset includes the following variables:
+| Risk band | Customers | Share | Annual charge exposure |
+|---|---|---|---|
+| High (above 50%) | 1,879 | 15.7% | 1,224,028 |
+| Medium (25% to 50%) | 2,175 | 18.1% | 725,702 |
+| Low (below 25%) | 7,946 | 66.2% | 652,658 |
 
-| Feature | Description |
+High-risk customers are 15.7% of the base but hold about 47% of the annual charge exposure.
+
+| Recommended action | Customers |
 |---|---|
-| `customer_id` | Unique identifier for each customer |
-| `tenure_months` | Number of months the customer has been associated with the company |
-| `monthly_charges` | Monthly charges paid by the customer |
-| `total_spend` | Total amount spent by the customer |
-| `support_tickets` | Number of customer support tickets raised |
-| `late_payments` | Number of late payments |
-| `monthly_usage_hours` | Monthly service usage |
-| `contract_type` | Customer contract type |
-| `churn` | Target variable indicating customer churn |
+| Priority service recovery call | 674 |
+| Billing support and payment plan review | 404 |
+| Personalised retention offer | 801 |
+| Engagement and satisfaction check-in | 2,175 |
+| Standard service; monitor | 7,946 |
 
-## Target Variable
+## Repository contents
 
-- `0` = Customer did not churn
-- `1` = Customer churned
-
-The synthetic churn variable was generated based on selected customer characteristics and risk factors.
-
----
-
-# Project Workflow
-
-```text
-Customer Dataset
-       ↓
-Data Exploration
-       ↓
-Data Preprocessing
-       ↓
-Train-Test Split
-       ↓
-Logistic Regression
-       ↓
-Random Forest
-       ↓
-Model Comparison
-       ↓
-Best Model Selection
-       ↓
-Churn Probability Prediction
-       ↓
-Risk Categorization
-       ↓
-Retention Recommendations
-       ↓
-Customer Priority Score
-       ↓
-Estimated Value at Risk
-       ↓
-Business Intelligence Output
-```
-
----
-
-# Technologies Used
-
-- Python
-- Pandas
-- NumPy
-- Matplotlib
-- Scikit-learn
-- Jupyter Notebook
-- Machine Learning
-
----
-
-# Machine Learning Models
-
-## 1. Logistic Regression
-
-Logistic Regression was used as the baseline model for the binary customer churn classification problem.
-
-The model predicts whether a customer is likely to churn based on customer characteristics and behavior.
-
----
-
-## 2. Random Forest Classifier
-
-Random Forest was used to capture more complex and non-linear relationships between customer characteristics and churn behavior.
-
-The model was configured using multiple decision trees and compared with Logistic Regression.
-
----
-
-# Model Performance Results
-
-The models were evaluated using:
-
-- Accuracy
-- Precision
-- Recall
-- F1 Score
-- ROC-AUC Score
-
-## Model Comparison
-
-| Model | Accuracy | Precision | Recall | F1 Score | ROC-AUC |
-|---|---:|---:|---:|---:|---:|
-| Logistic Regression | 0.6850 | 0.5000 | 0.1905 | 0.2759 | **0.6201** |
-| Random Forest | **0.6900** | **0.5172** | **0.2381** | **0.3261** | 0.5937 |
-
----
-
-# Best Model Selection
-
-Although Random Forest achieved slightly better results in Accuracy, Precision, Recall, and F1 Score, Logistic Regression achieved the higher ROC-AUC score.
-
-## Selected Model
-
-**Logistic Regression**
-
-## ROC-AUC Score
-
-**0.6201**
-
-ROC-AUC was used as the primary model selection metric because this project focuses not only on classifying customers but also on generating churn probabilities for customer prioritization.
-
----
-
-# Customer Risk Categorization
-
-Customers were categorized based on their predicted churn probability.
-
-| Risk Category | Churn Probability |
+| File | Description |
 |---|---|
-| High Risk | 75% and above |
-| Medium Risk | 50% to 74.99% |
-| Low Risk | Below 50% |
+| `Customer_Retention_Advanced.ipynb` | Full notebook: data, models, evaluation, scoring |
+| `customer_retention_predictions.csv` | Customer-level output: probability, risk band, action, exposure (12,000 rows, 19 columns) |
+| `Smart_Churn_Retention_Report.pdf` | 7-page project report |
 
-## Risk Category Results
-
-| Risk Category | Number of Customers |
-|---|---:|
-| Low Risk | 884 |
-| Medium Risk | 116 |
-| High Risk | 0 |
-
-The model classified the majority of customers as low risk, with 116 customers identified as medium risk.
-
-No customers reached the current 75% threshold for the High Risk category.
-
----
-
-# Overall Business Results
-
-The final analysis produced the following results:
-
-| Metric | Result |
-|---|---:|
-| Total Customers | 1,000 |
-| High-Risk Customers | 0 |
-| Medium-Risk Customers | 116 |
-| Low-Risk Customers | 884 |
-| Average Churn Probability | 31.24% |
-| Estimated Total Value at Risk | 14,711,359.13 |
-
-The results indicate that although no customers crossed the current high-risk threshold, a group of medium-risk customers should still be monitored and considered for proactive retention activities.
-
----
-
-# Customer Priority Score
-
-Not every customer with churn risk has the same financial importance.
-
-A customer priority score was calculated using:
-
-```text
-Priority Score = Churn Probability × Total Customer Spend
-```
-
-Customers with higher priority scores have both:
-
-- A higher probability of churn
-- Greater financial value to the company
-
-This helps businesses prioritize customers based on both risk and financial importance.
-
----
-
-# Estimated Customer Value at Risk
-
-The estimated value at risk was calculated using:
-
-```text
-Estimated Value at Risk = Total Customer Spend × Churn Probability
-```
-
-The total estimated customer value at risk across the dataset was:
-
-**14,711,359.13**
-
-This metric provides a business-oriented estimate of the potential customer value associated with predicted churn risk.
-
----
-
-# Top Priority Customer Insight
-
-The highest-priority customer was identified by combining churn probability with total customer spending.
-
-### Customer Details
-
-- **Customer ID:** 109
-- **Churn Probability:** 56.73%
-- **Total Spend:** 98,359
-- **Priority Score:** 55,803.43
-- **Risk Category:** Medium Risk
-- **Recommended Action:** Discount or Engagement Campaign
-
-This demonstrates why customer prioritization is important.
-
-A customer does not necessarily need to be classified as High Risk to require business attention. A Medium-Risk customer with high financial value can still represent significant potential value at risk.
-
----
-
-# Customer Retention Recommendations
-
-The project includes a rule-based recommendation system that converts churn predictions into potential retention strategies.
-
-Possible recommendations include:
-
-- Priority Customer Support
-- Flexible Payment Plan
-- Personalized Retention Offer
-- Discount or Engagement Campaign
-- No Immediate Action
-
-For the highest-priority customers identified in the analysis, the primary recommendation was:
-
-**Discount or Engagement Campaign**
-
----
-
-# Key Findings
-
-The major findings from the project are:
-
-- Logistic Regression achieved the highest ROC-AUC score of **0.6201** and was selected as the final model.
-- Random Forest achieved slightly higher Accuracy, Precision, Recall, and F1 Score than Logistic Regression.
-- The average predicted churn probability across customers was **31.24%**.
-- **116 customers** were categorized as Medium Risk.
-- **884 customers** were categorized as Low Risk.
-- No customers crossed the current 75% threshold for High Risk.
-- The estimated total customer value at risk was approximately **14.71 million**.
-- Customer prioritization identified financially valuable Medium-Risk customers who may require proactive retention strategies.
-- Combining churn probability with customer spending provides more useful business insights than churn classification alone.
-
----
-
-# Business Value
-
-This project demonstrates how machine learning can be integrated with business analytics.
-
-Instead of stopping at customer churn prediction, the project converts predictions into actionable business intelligence.
-
-The system helps businesses:
-
-- Identify customers with elevated churn risk
-- Prioritize financially valuable customers
-- Estimate potential customer value at risk
-- Recommend appropriate retention actions
-- Support data-driven customer retention decisions
-
-The project focuses on answering the following business question:
-
-> **Which customers should the company prioritize, and what action should be considered to reduce potential customer churn?**
-
----
-
-# Project Structure
-
-```text
-Smart-Customer-Churn-Retention-Intelligence/
-│
-├── Customer_Retention.ipynb
-│
-├── customer_churn_predictions.csv
-│
-└── README.md
-```
-
----
-
-# How to Run the Project
-
-## 1. Clone the Repository
+## How to run
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/kevinn7305/Smart-Customer-Churn-and-Retention-Intelligenece-System-using-Machine-Learning-.git
+cd Smart-Customer-Churn-and-Retention-Intelligenece-System-using-Machine-Learning-
+pip install numpy pandas matplotlib scikit-learn catboost jupyter
+jupyter notebook Customer_Retention_Advanced.ipynb
 ```
 
-## 2. Navigate to the Project Directory
+Run all cells. The notebook regenerates the dataset, trains the models and writes `customer_retention_predictions.csv`. Results are reproducible because of the fixed seed.
 
-```bash
-cd Smart-Customer-Churn-Retention-Intelligence
-```
+## Output columns
 
-## 3. Install Required Libraries
+`customer_id`, the 11 input features, `churn` (simulated outcome), `churn_probability`, `churn_probability_pct`, `risk_category`, `recommended_action`, `estimated_annual_charge_exposure`, `retention_priority_score`.
 
-```bash
-pip install pandas numpy matplotlib scikit-learn
-```
+`estimated_annual_charge_exposure` is monthly charges × 12 × churn probability. It is a prioritisation proxy, not a forecast of recoverable revenue.
 
-## 4. Open the Jupyter Notebook
+## Power BI
 
-Open:
+Load `customer_retention_predictions.csv` and build views on `risk_category`, `recommended_action` and `retention_priority_score` to give a retention team a ranked call list.
 
-```text
-Customer_Retention.ipynb
-```
+## Limitations
 
-Run all cells sequentially from top to bottom.
+- **Simulated data.** Results apply only to this simulation, not to real customers.
+- **Built-in signals.** The churn relationships were designed into the data, which makes the task easier than real data. The model recovering them is a workflow check, not a discovery.
+- **Random split.** A real deployment needs time-based splits.
+- **Importance is not causation.** Feature importance shows what the model uses, not what causes churn.
+- **Threshold.** It was set on accuracy and recall. A real campaign should use cost against customer value.
 
----
+## Next steps
 
-# Project Output
+- Repeat the experiment on a documented real dataset, such as IBM's public Telco Customer Churn sample.
+- Add cost-sensitive thresholds, fairness checks and drift monitoring.
+- Build and publish the Power BI dashboard.
 
-The final output dataset contains:
+## Tech stack
 
-- Customer ID
-- Customer characteristics
-- Actual churn information
-- Predicted churn probability
-- Churn probability percentage
-- Customer risk category
-- Recommended retention action
-- Customer priority score
-- Estimated customer value at risk
+Python, pandas, NumPy, scikit-learn, CatBoost, matplotlib.
 
-The final dataset is exported as:
+## Author
 
-```text
-customer_churn_predictions.csv
-```
-
----
-
-# Future Improvements
-
-Potential future improvements include:
-
-- Using a real-world customer churn dataset
-- Hyperparameter tuning using GridSearchCV or RandomizedSearchCV
-- Testing Gradient Boosting and XGBoost models
-- Adjusting churn risk thresholds based on business requirements
-- Handling potential class imbalance using SMOTE or other resampling techniques
-- Explainable AI using SHAP
-- Developing an interactive Power BI dashboard
-- Deploying the model using Streamlit
-- Creating an automated churn monitoring system
-
----
-
-# Author
-
-**Kevinn Infan Benedick B**
-
-
----
-
-# Project Summary
-
-This project demonstrates an end-to-end machine learning and business analytics workflow:
-
-**Data Generation → Data Exploration → Data Preprocessing → Model Training → Model Evaluation → Churn Probability Prediction → Risk Segmentation → Customer Prioritization → Retention Recommendations → Business Insights**
-
-The project demonstrates that customer churn analysis becomes more valuable when predictive modeling is combined with customer value and actionable business recommendations.
+**Kevinn**, business analytics. Feedback and suggestions are welcome.
